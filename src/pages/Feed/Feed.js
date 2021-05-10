@@ -58,6 +58,7 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
+        console.log('resData loadPosts', resData);
         this.setState({
           posts: resData.posts,
           totalPosts: resData.totalItems,
