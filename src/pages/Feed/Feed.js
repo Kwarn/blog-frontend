@@ -1,5 +1,4 @@
 import React, { Component, Fragment } from 'react';
-
 import Post from '../../components/Feed/Post/Post';
 import Button from '../../components/Button/Button';
 import FeedEdit from '../../components/Feed/FeedEdit/FeedEdit';
@@ -22,17 +21,17 @@ class Feed extends Component {
   };
 
   componentDidMount() {
-    fetch('URL')
-      .then(res => {
-        if (res.status !== 200) {
-          throw new Error('Failed to fetch user status.');
-        }
-        return res.json();
-      })
-      .then(resData => {
-        this.setState({ status: resData.status });
-      })
-      .catch(this.catchError);
+    // fetch('URL')
+    //   .then(res => {
+    //     if (res.status !== 200) {
+    //       throw new Error('Failed to fetch user status.');
+    //     }
+    //     return res.json();
+    //   })
+    //   .then(resData => {
+    //     this.setState({ status: resData.status });
+    //   })
+    //   .catch(this.catchError);
 
     this.loadPosts();
   }
@@ -60,7 +59,12 @@ class Feed extends Component {
       .then(resData => {
         console.log('resData loadPosts', resData);
         this.setState({
-          posts: resData.posts,
+          posts: resData.posts.map(post => {
+            return {
+              ...post,
+              imagePath: post.imageUrl,
+            };
+          }),
           totalPosts: resData.totalItems,
           postsLoading: false,
         });
@@ -107,21 +111,20 @@ class Feed extends Component {
       editLoading: true,
     });
     // Set up data (with image!)
+    const formData = new FormData();
+    formData.append('title', postData.title);
+    formData.append('content', postData.content);
+    formData.append('image', postData.image);
     let url = 'http://localhost:8080/feed/post';
     let method = 'POST';
     if (this.state.editPost) {
-      url = 'URL';
+      url = `http://localhost:8080/feed/post/${this.state.editPost._id}`;
+      method = 'PUT';
     }
 
     fetch(url, {
       method: method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        title: postData.title,
-        content: postData.content,
-      }),
+      body: formData,
     })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
@@ -172,7 +175,7 @@ class Feed extends Component {
 
   deletePostHandler = postId => {
     this.setState({ postsLoading: true });
-    fetch('URL')
+    fetch(`http://localhost:8080/feed/post/${postId}`, { method: 'DELETE' })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
           throw new Error('Deleting a post failed!');
