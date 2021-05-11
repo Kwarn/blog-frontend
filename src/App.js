@@ -17,11 +17,11 @@ class App extends Component {
   state = {
     showBackdrop: false,
     showMobileNav: false,
-    isAuth: true,
+    isAuth: false,
     token: null,
     userId: null,
     authLoading: false,
-    error: null
+    error: null,
   };
 
   componentDidMount() {
@@ -59,7 +59,14 @@ class App extends Component {
   loginHandler = (event, authData) => {
     event.preventDefault();
     this.setState({ authLoading: true });
-    fetch('URL')
+    fetch('http://localhost:8080/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: authData.email,
+        password: authData.password,
+      }),
+    })
       .then(res => {
         if (res.status === 422) {
           throw new Error('Validation failed.');
@@ -76,7 +83,7 @@ class App extends Component {
           isAuth: true,
           token: resData.token,
           authLoading: false,
-          userId: resData.userId
+          userId: resData.userId,
         });
         localStorage.setItem('token', resData.token);
         localStorage.setItem('userId', resData.userId);
@@ -92,7 +99,7 @@ class App extends Component {
         this.setState({
           isAuth: false,
           authLoading: false,
-          error: err
+          error: err,
         });
       });
   };
@@ -100,7 +107,15 @@ class App extends Component {
   signupHandler = (event, authData) => {
     event.preventDefault();
     this.setState({ authLoading: true });
-    fetch('URL')
+    fetch('http://localhost:8080/auth/signup', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: authData.signupForm.email.value,
+        password: authData.signupForm.password.value,
+        name: authData.signupForm.name.value,
+      }),
+    })
       .then(res => {
         if (res.status === 422) {
           throw new Error(
@@ -123,7 +138,7 @@ class App extends Component {
         this.setState({
           isAuth: false,
           authLoading: false,
-          error: err
+          error: err,
         });
       });
   };
