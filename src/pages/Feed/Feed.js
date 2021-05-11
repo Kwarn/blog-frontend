@@ -21,17 +21,21 @@ class Feed extends Component {
   };
 
   componentDidMount() {
-    // fetch('URL')
-    //   .then(res => {
-    //     if (res.status !== 200) {
-    //       throw new Error('Failed to fetch user status.');
-    //     }
-    //     return res.json();
-    //   })
-    //   .then(resData => {
-    //     this.setState({ status: resData.status });
-    //   })
-    //   .catch(this.catchError);
+    fetch('http://localhost:8080/feed/status', {
+      headers: {
+        Authorization: `Bearer ${this.props.token}`,
+      },
+    })
+      .then(res => {
+        if (res.status !== 200) {
+          throw new Error('Failed to fetch user status.');
+        }
+        return res.json();
+      })
+      .then(resData => {
+        this.setState({ status: resData.status });
+      })
+      .catch(this.catchError);
 
     this.loadPosts();
   }
@@ -61,7 +65,6 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
-        console.log('resData loadPosts', resData);
         this.setState({
           posts: resData.posts.map(post => {
             return {
@@ -78,7 +81,16 @@ class Feed extends Component {
 
   statusUpdateHandler = event => {
     event.preventDefault();
-    fetch('URL')
+    fetch('http://localhost:8080/feed/status', {
+      method: 'PUT',
+      body: JSON.stringify({
+        status: this.state.status,
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.props.token}`,
+      },
+    })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
           throw new Error("Can't update status!");
