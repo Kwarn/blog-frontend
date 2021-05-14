@@ -107,17 +107,16 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
-        this.loadPosts();
-        // this.setState({
-        //   posts: resData.posts.map(post => {
-        //     return {
-        //       ...post,
-        //       imagePath: post.imageUrl,
-        //     };
-        //   }),
-        //   totalPosts: resData.totalItems,
-        //   postsLoading: false,
-        // });
+        this.setState({
+          posts: resData.posts.map(post => {
+            return {
+              ...post,
+              imagePath: post.imageUrl,
+            };
+          }),
+          totalPosts: resData.totalItems,
+          postsLoading: false,
+        });
       })
       .catch(this.catchError);
   };
@@ -141,6 +140,7 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
+        this.loadPosts();
         console.log(resData);
       })
       .catch(this.catchError);
