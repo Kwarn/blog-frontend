@@ -21,3 +21,39 @@ exports.login = function (email, password) {
     }
   `;
 };
+
+exports.createPost = function (title, content, imageUrl) {
+  return `
+  mutation {
+    createPost(postInput: {title: "${title}", content: "${content}", imageUrl: "${imageUrl}"})
+    {
+      _id
+      title
+      content
+      creator {
+        name
+      }
+      createdAt
+    }
+  }
+  `;
+};
+
+exports.getPosts = function () {
+  return `
+  {
+    getPosts{
+      posts{
+        _id
+        title
+        content
+        creator{
+          name
+        }
+        createdAt
+      }
+      totalPosts
+    }
+  }
+  `;
+};
