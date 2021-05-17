@@ -89,7 +89,7 @@ class Feed extends Component {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.props.token}`,
       },
-      body: JSON.stringify({ query: graphqlQueries.getPosts() }),
+      body: JSON.stringify({ query: graphqlQueries.getPosts(page) }),
     })
       .then(res => {
         return res.json();
@@ -161,21 +161,37 @@ class Feed extends Component {
     this.setState({
       editLoading: true,
     });
-    // Set up data (with image!)
-    const title = postData.title;
-    const content = postData.content;
-    const imageUrl = postData.image;
-    let graphqlQuery = {
-      query: graphqlQueries.createPost(title, content, imageUrl),
-    };
-    fetch('http://localhost:8080/graphql', {
-      method: 'POST',
+    const formData = new FormData();
+    formData.append('image', postData.image);
+    if (this.state.editPost) {
+      formData.append('oldPath', this.state.editPost.imagePath);
+    }
+    fetch('http://localhost:8080/post-image', {
+      method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
         Authorization: `Bearer ${this.props.token}`,
       },
-      body: JSON.stringify(graphqlQuery),
+      body: formData,
     })
+      .then(res => res.json())
+      .then(fileResData => {
+        const imageUrl = fileResData.filePath;
+        const graphqlQuery = {
+          query: graphqlQueries.createPost(
+            postData.title,
+            postData.content,
+            imageUrl
+          ),
+        };
+        return fetch('http://localhost:8080/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.props.token}`,
+          },
+          body: JSON.stringify(graphqlQuery),
+        });
+      })
       .then(res => {
         return res.json();
       })
@@ -193,9 +209,21 @@ class Feed extends Component {
           content: resData.data.createPost.content,
           creator: resData.data.createPost.creator,
           createdAt: resData.data.createPost.createdAt,
+          imagePath: resData.data.createPost.imageUrl,
         };
         this.setState(prevState => {
+          let updatedPosts = [...prevState.posts];
+          if (prevState.editPost) {
+            let postIndex = prevState.posts.findIndex(
+              p => p._id === prevState.editPost._id
+            );
+            updatedPosts[postIndex] = post;
+          } else {
+            updatedPosts.pop();
+            updatedPosts.unshift(post);
+          }
           return {
+            posts: updatedPosts,
             isEditing: false,
             editPost: null,
             editLoading: false,

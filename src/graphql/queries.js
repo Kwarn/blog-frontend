@@ -30,6 +30,7 @@ exports.createPost = function (title, content, imageUrl) {
       _id
       title
       content
+      imageUrl
       creator {
         name
       }
@@ -39,14 +40,15 @@ exports.createPost = function (title, content, imageUrl) {
   `;
 };
 
-exports.getPosts = function () {
+exports.getPosts = function (page) {
   return `
   {
-    getPosts{
+    getPosts(page: ${page}){
       posts{
         _id
         title
         content
+        imageUrl
         creator{
           name
         }
@@ -54,6 +56,23 @@ exports.getPosts = function () {
       }
       totalPosts
     }
+  }
+  `;
+};
+
+exports.getPost = function (postId) {
+  return `
+  {
+    getPost(postId: "${postId}")
+      {
+        title
+        content
+        imageUrl
+        creator{
+          name
+        }
+        createdAt
+      }
   }
   `;
 };
