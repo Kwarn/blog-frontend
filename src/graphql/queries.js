@@ -40,6 +40,24 @@ exports.createPost = function (title, content, imageUrl) {
   `;
 };
 
+exports.updatePost = function (postId, title, content, imageUrl) {
+  return `
+  mutation {
+    updatePost(postId: "${postId}", postInput: {title: "${title}", content: "${content}", imageUrl: "${imageUrl}"})
+    {
+      _id
+      title
+      content
+      imageUrl
+      creator {
+        name
+      }
+      createdAt
+    }
+  }
+  `;
+};
+
 exports.getPosts = function (page) {
   return `
   {
@@ -73,6 +91,28 @@ exports.getPost = function (postId) {
         }
         createdAt
       }
+  }
+  `;
+};
+
+exports.getStatus = function () {
+  return `
+  {
+    getStatus
+    {
+      status
+    }
+  }
+  `;
+};
+
+exports.updateStatus = function (status) {
+  return `
+  mutation {
+    updateStatus(statusInput: {status: "${status}"})
+    {
+      status
+    }
   }
   `;
 };

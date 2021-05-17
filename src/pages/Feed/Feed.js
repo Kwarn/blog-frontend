@@ -22,10 +22,13 @@ class Feed extends Component {
   };
 
   componentDidMount() {
-    fetch('http://localhost:8080/feed/status', {
+    fetch('http://localhost:8080/graphql', {
+      method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${this.props.token}`,
       },
+      body: JSON.stringify({ query: graphqlQueries.getStatus() }),
     })
       .then(res => {
         if (res.status !== 200) {
@@ -34,7 +37,7 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
-        this.setState({ status: resData.status });
+        this.setState({ status: resData.data.getStatus.status });
       })
       .catch(this.catchError);
 
@@ -115,25 +118,25 @@ class Feed extends Component {
 
   statusUpdateHandler = event => {
     event.preventDefault();
-    fetch('http://localhost:8080/feed/status', {
-      method: 'PUT',
-      body: JSON.stringify({
-        status: this.state.status,
-      }),
+    fetch('http://localhost:8080/graphql', {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.props.token}`,
       },
+      body: JSON.stringify({
+        query: graphqlQueries.updateStatus(this.state.status),
+      }),
     })
       .then(res => {
-        if (res.status !== 200 && res.status !== 201) {
-          throw new Error("Can't update status!");
-        }
         return res.json();
       })
       .then(resData => {
-        this.loadPosts();
         console.log(resData);
+        if (resData.errors) {
+          throw new Error("Can't update status!");
+        }
+        this.setState({ query: resData.data.updateStatus.status });
       })
       .catch(this.catchError);
   };
@@ -145,7 +148,7 @@ class Feed extends Component {
   startEditPostHandler = postId => {
     this.setState(prevState => {
       const loadedPost = { ...prevState.posts.find(p => p._id === postId) };
-
+      console.log(loadedPost);
       return {
         isEditing: true,
         editPost: loadedPost,
@@ -176,20 +179,30 @@ class Feed extends Component {
       .then(res => res.json())
       .then(fileResData => {
         const imageUrl = fileResData.filePath;
-        const graphqlQuery = {
-          query: graphqlQueries.createPost(
-            postData.title,
-            postData.content,
-            imageUrl
-          ),
-        };
         return fetch('http://localhost:8080/graphql', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${this.props.token}`,
           },
-          body: JSON.stringify(graphqlQuery),
+          body: JSON.stringify(
+            this.state.editPost
+              ? {
+                  query: graphqlQueries.updatePost(
+                    this.state.editPost._id,
+                    postData.title,
+                    postData.content,
+                    imageUrl
+                  ),
+                }
+              : {
+                  query: graphqlQueries.createPost(
+                    postData.title,
+                    postData.content,
+                    imageUrl
+                  ),
+                }
+          ),
         });
       })
       .then(res => {
@@ -203,13 +216,14 @@ class Feed extends Component {
           console.log(resData.errors);
           throw new Error('Creating post failed.');
         }
+        let resDataField = this.state.editPost ? 'updatePost' : 'createPost';
         const post = {
-          _id: resData.data.createPost._id,
-          title: resData.data.createPost.title,
-          content: resData.data.createPost.content,
-          creator: resData.data.createPost.creator,
-          createdAt: resData.data.createPost.createdAt,
-          imagePath: resData.data.createPost.imageUrl,
+          _id: resData.data[resDataField]._id,
+          title: resData.data[resDataField].title,
+          content: resData.data[resDataField].content,
+          creator: resData.data[resDataField].creator,
+          createdAt: resData.data[resDataField].createdAt,
+          imagePath: resData.data[resDataField].imageUrl,
         };
         this.setState(prevState => {
           let updatedPosts = [...prevState.posts];
