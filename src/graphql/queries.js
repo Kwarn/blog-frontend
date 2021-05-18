@@ -58,6 +58,17 @@ exports.updatePost = function (postId, title, content, imageUrl) {
   `;
 };
 
+exports.deletePost = function (postId) {
+  return `
+  mutation {
+    deletePost(postId: "${postId}")
+    {
+      postId
+    }
+  }
+  `;
+};
+
 exports.getPosts = function (page) {
   return `
   {

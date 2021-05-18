@@ -26,7 +26,6 @@ class SinglePost extends Component {
         return res.json();
       })
       .then(resData => {
-        console.log(resData);
         if (resData.errors) {
           throw new Error('Fetching post failed.');
         }

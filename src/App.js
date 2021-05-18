@@ -72,7 +72,6 @@ class App extends Component {
         return res.json();
       })
       .then(resData => {
-        console.log(resData);
         if (resData.errors && resData.errors[0].status === 401) {
           throw new Error('Incorrect login details');
         }
@@ -131,7 +130,6 @@ class App extends Component {
         if (resData.errors) {
           throw new Error('Create user failed.');
         }
-        console.log(resData);
         this.setState({ isAuth: false, authLoading: false });
         this.props.history.replace('/');
       })

@@ -98,7 +98,6 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
-        console.log(resData);
         if (resData.errors) {
           throw new Error('Fetching posts failed.');
         }
@@ -132,7 +131,6 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
-        console.log(resData);
         if (resData.errors) {
           throw new Error("Can't update status!");
         }
@@ -148,7 +146,6 @@ class Feed extends Component {
   startEditPostHandler = postId => {
     this.setState(prevState => {
       const loadedPost = { ...prevState.posts.find(p => p._id === postId) };
-      console.log(loadedPost);
       return {
         isEditing: true,
         editPost: loadedPost,
@@ -213,7 +210,6 @@ class Feed extends Component {
           throw new Error('Validation failed.');
         }
         if (resData.errors) {
-          console.log(resData.errors);
           throw new Error('Creating post failed.');
         }
         let resDataField = this.state.editPost ? 'updatePost' : 'createPost';
@@ -245,7 +241,6 @@ class Feed extends Component {
         });
       })
       .catch(err => {
-        console.log(err);
         this.setState({
           isEditing: false,
           editPost: null,
@@ -261,20 +256,22 @@ class Feed extends Component {
 
   deletePostHandler = postId => {
     this.setState({ postsLoading: true });
-    fetch(`http://localhost:8080/feed/post/${postId}`, {
-      method: 'DELETE',
+    fetch(`http://localhost:8080/graphql`, {
+      method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${this.props.token}`,
       },
+      body: JSON.stringify({ query: graphqlQueries.deletePost(postId) }),
     })
       .then(res => {
-        if (res.status !== 200 && res.status !== 201) {
-          throw new Error('Deleting a post failed!');
-        }
         return res.json();
       })
       .then(resData => {
-        console.log(resData);
+
+        if (resData.errors) {
+          throw new Error('Deleting a post failed!');
+        }
         this.setState(prevState => {
           const updatedPosts = prevState.posts.filter(p => p._id !== postId);
           return { posts: updatedPosts, postsLoading: false };
