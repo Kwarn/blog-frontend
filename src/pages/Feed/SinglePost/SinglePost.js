@@ -20,7 +20,7 @@ class SinglePost extends Component {
         Authorization: `Bearer ${this.props.token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query: graphqlQueries.getPost(postId) }),
+      body: JSON.stringify(graphqlQueries.getPost(postId)),
     })
       .then(res => {
         return res.json();

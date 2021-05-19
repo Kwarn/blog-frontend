@@ -6,11 +6,12 @@ import Backdrop from './components/Backdrop/Backdrop';
 import Toolbar from './components/Toolbar/Toolbar';
 import MainNavigation from './components/Navigation/MainNavigation/MainNavigation';
 import MobileNavigation from './components/Navigation/MobileNavigation/MobileNavigation';
-import ErrorHandler from './components/ErrorHandler/ErrorHandler';
+import ErrorHandlerComponent from './components/ErrorHandler/ErrorHandler';
 import FeedPage from './pages/Feed/Feed';
 import SinglePostPage from './pages/Feed/SinglePost/SinglePost';
 import LoginPage from './pages/Auth/Login';
 import SignupPage from './pages/Auth/Signup';
+import errorHandler from './util/errorHandler';
 import './App.css';
 
 class App extends Component {
@@ -64,19 +65,17 @@ class App extends Component {
     fetch('http://localhost:8080/graphql', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: graphqlQueries.login(email, password),
-      }),
+      body: JSON.stringify(graphqlQueries.login(email, password)),
     })
       .then(res => {
         return res.json();
       })
       .then(resData => {
-        if (resData.errors && resData.errors[0].status === 401) {
-          throw new Error('Incorrect login details');
-        }
         if (resData.errors) {
-          throw new Error('Login failed');
+          throw errorHandler(
+            resData.errors[0].message,
+            resData.errors[0].status
+          );
         }
         const token = resData.data.login.token;
         const userId = resData.data.login.userId;
@@ -114,27 +113,22 @@ class App extends Component {
     fetch('http://localhost:8080/graphql', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: graphqlQueries.signup(email, name, password),
-      }),
+      body: JSON.stringify(graphqlQueries.signup(email, name, password)),
     })
       .then(res => {
         return res.json();
       })
       .then(resData => {
-        if (resData.errors && resData.errors[0].status === 422) {
-          throw new Error(
-            "Validation failed. Make sure the email address isn't used yet!"
-          );
-        }
         if (resData.errors) {
-          throw new Error('Create user failed.');
+          throw errorHandler(
+            resData.errors[0].message,
+            resData.errors[0].status
+          );
         }
         this.setState({ isAuth: false, authLoading: false });
         this.props.history.replace('/');
       })
       .catch(err => {
-        console.log(err);
         this.setState({
           isAuth: false,
           authLoading: false,
@@ -210,7 +204,10 @@ class App extends Component {
         {this.state.showBackdrop && (
           <Backdrop onClick={this.backdropClickHandler} />
         )}
-        <ErrorHandler error={this.state.error} onHandle={this.errorHandler} />
+        <ErrorHandlerComponent
+          error={this.state.error}
+          onHandle={this.errorHandler}
+        />
         <Layout
           header={
             <Toolbar>

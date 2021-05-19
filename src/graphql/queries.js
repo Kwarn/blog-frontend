@@ -1,99 +1,138 @@
 exports.signup = function (email, name, password) {
-  return `
-      mutation {
-        createUser(userInput: {email: "${email}", name:"${name}", password: "${password}"})
-        {
-          _id
-          name
-        }
+  return {
+    query: `
+    mutation CreateNewUser($email: String!, $name: String!, $password: String!){
+      createUser(userInput: {email: $email, name: $name, password: $password})
+      {
+        _id
+        name
       }
-      `;
+    }
+    `,
+    variables: {
+      email: email,
+      name: name,
+      password: password,
+    },
+  };
 };
 
 exports.login = function (email, password) {
-  return `
-    {
-      login(email: "${email}", password: "${password}")
+  return {
+    query: `
+    query UserLogin($email: String!, $password: String!){
+      login(email: $email, password: $password)
       {
         token
         userId
       }
     }
-  `;
+  `,
+    variables: {
+      email: email,
+      password: password,
+    },
+  };
 };
 
 exports.createPost = function (title, content, imageUrl) {
-  return `
-  mutation {
-    createPost(postInput: {title: "${title}", content: "${content}", imageUrl: "${imageUrl}"})
-    {
-      _id
-      title
-      content
-      imageUrl
-      creator {
-        name
-      }
-      createdAt
-    }
-  }
-  `;
-};
-
-exports.updatePost = function (postId, title, content, imageUrl) {
-  return `
-  mutation {
-    updatePost(postId: "${postId}", postInput: {title: "${title}", content: "${content}", imageUrl: "${imageUrl}"})
-    {
-      _id
-      title
-      content
-      imageUrl
-      creator {
-        name
-      }
-      createdAt
-    }
-  }
-  `;
-};
-
-exports.deletePost = function (postId) {
-  return `
-  mutation {
-    deletePost(postId: "${postId}")
-    {
-      postId
-    }
-  }
-  `;
-};
-
-exports.getPosts = function (page) {
-  return `
-  {
-    getPosts(page: ${page}){
-      posts{
+  return {
+    query: `
+    mutation CreateNewPost($title: String!, $content: String!, $imageUrl: String! ){
+      createPost(postInput: {title: $title, content: $content, imageUrl: $imageUrl})
+      {
         _id
         title
         content
         imageUrl
-        creator{
+        creator {
           name
         }
         createdAt
       }
-      totalPosts
     }
-  }
-  `;
+  `,
+    variables: {
+      title: title,
+      content: content,
+      imageUrl: imageUrl,
+    },
+  };
+};
+
+exports.updatePost = function (postId, title, content, imageUrl) {
+  return {
+    query: `
+    mutation UpdateExistingPost($postId: ID!, $title: String!, $content: String!, $imageUrl: String!){
+      updatePost(postId: $postId, postInput: {title: $title, content: $content, imageUrl: $imageUrl})
+      {
+        _id
+        title
+        content
+        imageUrl
+        creator {
+          name
+        }
+        createdAt
+      }
+    }
+    `,
+    variables: {
+      postId: postId,
+      title: title,
+      content: content,
+      imageUrl: imageUrl,
+    },
+  };
+};
+
+exports.deletePost = function (postId) {
+  return {
+    query: `
+    mutation DeleteUserPost($postId: ID!){
+      deletePost(postId: $postId)
+      {
+        postId
+      }
+    }
+    `,
+    variables: {
+      postId: postId,
+    },
+  };
+};
+
+exports.getPosts = function (page) {
+  return {
+    query: `
+    query FetchPosts($page: Int!){
+      getPosts(page: $page){
+        posts{
+          _id
+          title
+          content
+          imageUrl
+          creator{
+            name
+          }
+          createdAt
+        }
+        totalPosts
+      }
+    }
+    `,
+    variables: {
+      page: page,
+    },
+  };
 };
 
 exports.getPost = function (postId) {
-  return `
-  {
-    getPost(postId: "${postId}")
-      {
+  return {
+    query: `
+    query GetSinglePost($postId: ID!){
+      getPost(postId: $postId)
+        {
         title
         content
         imageUrl
@@ -102,28 +141,39 @@ exports.getPost = function (postId) {
         }
         createdAt
       }
-  }
-  `;
+    }
+    `,
+    variables: {
+      postId: postId,
+    },
+  };
 };
 
 exports.getStatus = function () {
-  return `
-  {
-    getStatus
+  return {
+    query: `
     {
-      status
+      getStatus
+      {
+        status
+      }
     }
-  }
-  `;
+  `,
+  };
 };
 
 exports.updateStatus = function (status) {
-  return `
-  mutation {
-    updateStatus(statusInput: {status: "${status}"})
-    {
-      status
+  return {
+    query: `
+    mutation UpdateUserStatus($status: String!){
+      updateStatus(statusInput: {status: $status})
+      {
+        status
+      }
     }
-  }
-  `;
+    `,
+    variables: {
+      status: status,
+    },
+  };
 };

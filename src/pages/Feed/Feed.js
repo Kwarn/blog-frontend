@@ -29,7 +29,7 @@ class Feed extends Component {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.props.token}`,
       },
-      body: JSON.stringify({ query: graphqlQueries.getStatus() }),
+      body: JSON.stringify(graphqlQueries.getStatus()),
     })
       .then(res => {
         return res.json();
@@ -96,7 +96,7 @@ class Feed extends Component {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.props.token}`,
       },
-      body: JSON.stringify({ query: graphqlQueries.getPosts(page) }),
+      body: JSON.stringify(graphqlQueries.getPosts(page)),
     })
       .then(res => {
         return res.json();
@@ -130,9 +130,7 @@ class Feed extends Component {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.props.token}`,
       },
-      body: JSON.stringify({
-        query: graphqlQueries.updateStatus(this.state.status),
-      }),
+      body: JSON.stringify(graphqlQueries.updateStatus(this.state.status)),
     })
       .then(res => {
         return res.json();
@@ -144,7 +142,7 @@ class Feed extends Component {
             resData.errors[0].status
           );
         }
-        this.setState({ query: resData.data.updateStatus.status });
+        this.setState({ status: resData.data.updateStatus.status });
       })
       .catch(this.catchError);
   };
@@ -185,7 +183,7 @@ class Feed extends Component {
     })
       .then(res => res.json())
       .then(fileResData => {
-        const imageUrl = fileResData.filePath;
+        const imageUrl = fileResData.filePath || 'undefined';
         return fetch('http://localhost:8080/graphql', {
           method: 'POST',
           headers: {
@@ -194,21 +192,17 @@ class Feed extends Component {
           },
           body: JSON.stringify(
             this.state.editPost
-              ? {
-                  query: graphqlQueries.updatePost(
-                    this.state.editPost._id,
-                    postData.title,
-                    postData.content,
-                    imageUrl
-                  ),
-                }
-              : {
-                  query: graphqlQueries.createPost(
-                    postData.title,
-                    postData.content,
-                    imageUrl
-                  ),
-                }
+              ? graphqlQueries.updatePost(
+                  this.state.editPost._id,
+                  postData.title,
+                  postData.content,
+                  imageUrl
+                )
+              : graphqlQueries.createPost(
+                  postData.title,
+                  postData.content,
+                  imageUrl
+                )
           ),
         });
       })
@@ -231,6 +225,7 @@ class Feed extends Component {
         };
         this.setState(prevState => {
           let updatedPosts = [...prevState.posts];
+          let updatedTotalPosts = prevState.totalPosts;
           if (prevState.editPost) {
             let postIndex = prevState.posts.findIndex(
               p => p._id === prevState.editPost._id
@@ -238,6 +233,7 @@ class Feed extends Component {
             updatedPosts[postIndex] = post;
           } else {
             if (prevState.posts.length >= 2) {
+              updatedTotalPosts += 1;
               updatedPosts.pop();
             }
             updatedPosts.unshift(post);
@@ -247,6 +243,7 @@ class Feed extends Component {
             isEditing: false,
             editPost: null,
             editLoading: false,
+            totalPosts: updatedTotalPosts,
           };
         });
       })
@@ -272,7 +269,7 @@ class Feed extends Component {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.props.token}`,
       },
-      body: JSON.stringify({ query: graphqlQueries.deletePost(postId) }),
+      body: JSON.stringify(graphqlQueries.deletePost(postId)),
     })
       .then(res => {
         return res.json();
@@ -286,7 +283,12 @@ class Feed extends Component {
         }
         this.setState(prevState => {
           const updatedPosts = prevState.posts.filter(p => p._id !== postId);
-          return { posts: updatedPosts, postsLoading: false };
+          const totalPosts = (prevState.totalPosts += 1);
+          return {
+            posts: updatedPosts,
+            postsLoading: false,
+            totalPosts: totalPosts,
+          };
         });
       })
       .catch(err => {
