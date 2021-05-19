@@ -5,8 +5,9 @@ import FeedEdit from '../../components/Feed/FeedEdit/FeedEdit';
 import Input from '../../components/Form/Input/Input';
 import Paginator from '../../components/Paginator/Paginator';
 import Loader from '../../components/Loader/Loader';
-import ErrorHandler from '../../components/ErrorHandler/ErrorHandler';
+import ErrorHandlerComponent from '../../components/ErrorHandler/ErrorHandler';
 import graphqlQueries from '../../graphql/queries';
+import errorHandler from '../../util/errorHandler';
 import './Feed.css';
 
 class Feed extends Component {
@@ -31,12 +32,15 @@ class Feed extends Component {
       body: JSON.stringify({ query: graphqlQueries.getStatus() }),
     })
       .then(res => {
-        if (res.status !== 200) {
-          throw new Error('Failed to fetch user status.');
-        }
         return res.json();
       })
       .then(resData => {
+        if (resData.errors) {
+          throw errorHandler(
+            resData.errors[0].message,
+            resData.errors[0].status
+          );
+        }
         this.setState({ status: resData.data.getStatus.status });
       })
       .catch(this.catchError);
@@ -99,7 +103,10 @@ class Feed extends Component {
       })
       .then(resData => {
         if (resData.errors) {
-          throw new Error('Fetching posts failed.');
+          throw errorHandler(
+            resData.errors[0].message,
+            resData.errors[0].status
+          );
         }
         this.setState({
           posts: resData.data.getPosts.posts.map(post => {
@@ -132,7 +139,10 @@ class Feed extends Component {
       })
       .then(resData => {
         if (resData.errors) {
-          throw new Error("Can't update status!");
+          throw errorHandler(
+            resData.errors[0].message,
+            resData.errors[0].status
+          );
         }
         this.setState({ query: resData.data.updateStatus.status });
       })
@@ -202,15 +212,13 @@ class Feed extends Component {
           ),
         });
       })
-      .then(res => {
-        return res.json();
-      })
+      .then(res => res.json())
       .then(resData => {
-        if (resData.errors && resData.errors[0].status === 422) {
-          throw new Error('Validation failed.');
-        }
         if (resData.errors) {
-          throw new Error('Creating post failed.');
+          throw errorHandler(
+            resData.errors[0].message,
+            resData.errors[0].status
+          );
         }
         let resDataField = this.state.editPost ? 'updatePost' : 'createPost';
         const post = {
@@ -229,7 +237,9 @@ class Feed extends Component {
             );
             updatedPosts[postIndex] = post;
           } else {
-            updatedPosts.pop();
+            if (prevState.posts.length >= 2) {
+              updatedPosts.pop();
+            }
             updatedPosts.unshift(post);
           }
           return {
@@ -268,9 +278,11 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
-
         if (resData.errors) {
-          throw new Error('Deleting a post failed!');
+          throw errorHandler(
+            resData.errors[0].message,
+            resData.errors[0].status
+          );
         }
         this.setState(prevState => {
           const updatedPosts = prevState.posts.filter(p => p._id !== postId);
@@ -278,7 +290,7 @@ class Feed extends Component {
         });
       })
       .catch(err => {
-        console.log(err);
+        this.catchError(err);
         this.setState({ postsLoading: false });
       });
   };
@@ -288,13 +300,17 @@ class Feed extends Component {
   };
 
   catchError = error => {
+    console.log('Catch error : ', error);
     this.setState({ error: error });
   };
 
   render() {
     return (
       <Fragment>
-        <ErrorHandler error={this.state.error} onHandle={this.errorHandler} />
+        <ErrorHandlerComponent
+          error={this.state.error}
+          onHandle={this.errorHandler}
+        />
         <FeedEdit
           editing={this.state.isEditing}
           selectedPost={this.state.editPost}
